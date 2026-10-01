@@ -1,0 +1,24 @@
+
+apiVersion: v2
+name: keycloak120
+description: A Helm chart for to test 16.1.1 keycloak support for 1.1.5 or not
+type: application
+
+version: 1.3.0
+appVersion: "16.1.1"
+
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    tags:
+      - bitnami-common
+    version: 1.x.x
+
+home: https://mosip.io
+keywords:
+  - keycloak
+  - access-management
+
+maintainers:
+  - email: info@mosip.io
+    name: MOSIP
