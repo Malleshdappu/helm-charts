@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.name }}
+spec:
+  replicas: {{ .Values.services.keycloak.podconfig.replicas }} 
+  selector:
+    matchLabels:
+      app: {{ .Values.name }}
+  minReadySeconds: {{ .Values.services.keycloak.podconfig.minReadySeconds }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: {{ .Values.services.keycloak.podconfig.maxUnavailable }}
+      maxSurge: {{ .Values.services.keycloak.podconfig.maxSurge }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.name }}
+        exportLogs: {{ .Values.exportLogs }}
+    spec:
+      hostname: kc26
+      containers:
+      - name: {{ .Values.name }}
+        image: {{ .Values.dockerImage }}:{{ .Values.dockerTag }}
+        args:
+          - start
+        env:
+        - name: KC_BOOTSTRAP_ADMIN_USERNAME 
+          value: {{ .Values.keycloakUser | quote  }}
+        - name: KC_BOOTSTRAP_ADMIN_PASSWORD 
+          value: {{ .Values.keycloakPassword | quote  }}
+        - name: KC_DB 
+          value: "postgres"
+        - name: KC_DB_URL
+          value: "jdbc:postgresql://{{ .Values.db.host }}:{{ .Values.db.port }}/{{ .Values.db.name }}"
+        - name: KC_DB_USERNAME 
+          value: {{ .Values.db.user | quote  }} 
+        - name: KC_DB_PASSWORD
+          value: {{ .Values.db.password | quote  }}
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: KC_HTTP_PORT
+          value: {{ .Values.containerPort | quote  }}
+        - name: KC_HTTP_RELATIVE_PATH
+          value: "/auth"
+        - name: KC_PROXY_HEADERS
+          value: "xforwarded"
+        - name: KC_HOSTNAME
+          value: "https://{{ .Values.domain }}/keycloak26/auth" 
+        ports:
+        - containerPort: {{ .Values.containerPort }} 
+        readinessProbe:
+          tcpSocket:
+            port: {{ .Values.containerPort }}  # All defaults used
+          periodSeconds: {{ .Values.probe.period }}
+          timeoutSeconds: {{ .Values.probe.timeout }}
+          failureThreshold: {{ .Values.probe.failureThreshold }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.containerPort }}  # All defaults used
+          periodSeconds: {{ .Values.probe.livenessPeriod }}
+          timeoutSeconds: {{ .Values.probe.timeout }}
+          failureThreshold: {{ .Values.probe.failureThreshold }}
+        startupProbe:
+          tcpSocket:
+            port: {{ .Values.containerPort }}  # All defaults used
+          failureThreshold: {{ .Values.probe.failureThreshold }}
+          periodSeconds: {{ .Values.probe.startupPeriod }}
+          timeoutSeconds: {{ .Values.probe.timeout }}
+          initialDelaySeconds: {{ .Values.probe.initialDelaySeconds }}
